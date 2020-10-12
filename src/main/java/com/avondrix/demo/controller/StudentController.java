@@ -1,0 +1,34 @@
+package com.avondrix.demo.controller;
+
+import com.avondrix.demo.domain.Student;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.Arrays;
+import java.util.List;
+
+@RestController
+@RequestMapping("api/v1/students")
+public class StudentController {
+
+    private static final List<Student> STUDENTS = Arrays.asList(
+            new Student(1, "AAA"),
+            new Student(2, "BBB"),
+            new Student(3, "CCC")
+    );
+
+
+    @GetMapping(path = "{id}")
+    public Student getStudent(@PathVariable("id") Integer id) {
+        System.out.println("get student.");
+        return STUDENTS.stream()
+                .filter(student -> id.equals(student.getId()))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException(
+                        "Student " + id + "does not exist."
+                ));
+    }
+}
