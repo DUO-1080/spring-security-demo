@@ -23,7 +23,6 @@ public class StudentController {
 
     @GetMapping(path = "{id}")
     public Student getStudent(@PathVariable("id") Integer id) {
-        System.out.println("get student.");
         return STUDENTS.stream()
                 .filter(student -> id.equals(student.getId()))
                 .findFirst()

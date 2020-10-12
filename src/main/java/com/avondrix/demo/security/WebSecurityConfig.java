@@ -12,6 +12,8 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 
+import static com.avondrix.demo.security.ApplicationUserRole.STUDENT;
+
 @Configuration
 @EnableWebSecurity
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
@@ -27,6 +29,10 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     protected void configure(HttpSecurity http) throws Exception {
         http
                 .authorizeRequests()
+                .antMatchers("/", "index", "/css/*", "/js/*")
+                .permitAll()
+                .antMatchers("/api/**")
+                .hasRole(STUDENT.name())
                 .anyRequest()
                 .authenticated()
                 .and()
@@ -39,11 +45,11 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         UserDetails avonUser = User.builder()
                 .username("avon")
                 .password(passwordEncoder.encode("password"))
-                .roles(ApplicationUserRole.STUDENT.name())
+                .roles(STUDENT.name())
                 .build();
 
         UserDetails DuoUser = User.builder()
-                .username("DUO)")
+                .username("DUO")
                 .password(passwordEncoder.encode("admin password"))
                 .roles(ApplicationUserRole.ADMIN.name())
                 .build();
