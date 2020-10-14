@@ -1,22 +1,21 @@
 package com.avondrix.demo.security;
 
+import com.avondrix.demo.auth.ApplicationUserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 import java.util.concurrent.TimeUnit;
 
-import static com.avondrix.demo.security.ApplicationUserRole.*;
+import static com.avondrix.demo.security.ApplicationUserRole.STUDENT;
 
 @Configuration
 @EnableWebSecurity
@@ -24,10 +23,12 @@ import static com.avondrix.demo.security.ApplicationUserRole.*;
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
     private final PasswordEncoder passwordEncoder;
+    private final ApplicationUserService applicationUserService;
 
     @Autowired
-    public WebSecurityConfig(PasswordEncoder passwordEncoder) {
+    public WebSecurityConfig(PasswordEncoder passwordEncoder, ApplicationUserService applicationUserService) {
         this.passwordEncoder = passwordEncoder;
+        this.applicationUserService = applicationUserService;
     }
 
     @Override
@@ -39,14 +40,6 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .permitAll()
                 .antMatchers("/api/**")
                 .hasRole(STUDENT.name())
-//                .antMatchers(HttpMethod.DELETE, "/management/api/**")
-//                .hasAuthority(COURSE_WRITE.getPermission())
-//                .antMatchers(HttpMethod.POST, "/management/api/**")
-//                .hasAuthority(COURSE_WRITE.getPermission())
-//                .antMatchers(HttpMethod.PUT, "/management/api/**")
-//                .hasAuthority(COURSE_WRITE.getPermission())
-//                .antMatchers(HttpMethod.GET, "/management/api/**")
-//                .hasAnyRole(ADMINTRAINEE.name(), ADMIN.name())
                 .anyRequest()
                 .authenticated()
                 .and()
@@ -72,36 +65,16 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     }
 
     @Override
+    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+        auth.authenticationProvider(daoAuthenticationProvider());
+    }
+
     @Bean
-    protected UserDetailsService userDetailsService() {
-        UserDetails avonUser = User.builder()
-                .username("avon")
-                .password(passwordEncoder.encode("password"))
-//                User's roles define on authorities, name like "ROLE_STUDENT", so if we want a user has a role,
-//                just add a item to authorities list.
-//                .roles(STUDENT.name())
-                .authorities(STUDENT.getGrantedAuthority())
-                .build();
-
-        UserDetails duoUser = User.builder()
-                .username("DUO")
-                .password(passwordEncoder.encode("admin password"))
-//                .roles(ApplicationUserRole.ADMIN.name())
-                .authorities(ADMIN.getGrantedAuthority())
-                .build();
-
-        UserDetails tomUser = User.builder()
-                .username("Tom")
-                .password(passwordEncoder.encode("admin password"))
-//                .roles(ADMINTRAINEE.name())
-                .authorities(ADMINTRAINEE.getGrantedAuthority())
-                .build();
-
-        return new InMemoryUserDetailsManager(
-                avonUser,
-                duoUser,
-                tomUser
-        );
+    public DaoAuthenticationProvider daoAuthenticationProvider() {
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
+        provider.setPasswordEncoder(passwordEncoder);
+        provider.setUserDetailsService(applicationUserService);
+        return provider;
     }
 
 }
